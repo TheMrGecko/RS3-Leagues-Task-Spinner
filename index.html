@@ -1,0 +1,1240 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <link rel="icon" type="image/svg+xml" href="data:image/svg+xml,<svg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 64 64'><circle cx='32' cy='32' r='28' fill='%23ff6a00'/><text x='32' y='42' font-size='32' text-anchor='middle' fill='white' font-family='Orbitron,sans-serif'>D</text></svg>">
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>DoubleShines Task Tracker</title>
+    <script src="https://cdn.tailwindcss.com"></script>
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link href="https://fonts.googleapis.com/css2?family=Orbitron:wght@400;700&family=Poppins:wght@300;400;600&display=swap" rel="stylesheet">
+    <style>
+        :root {
+            --glow-color: #ff6a00;
+            --item-height: 60px;
+        }
+        body {
+            font-family: 'Poppins', sans-serif;
+            background-color: #111827;
+            color: #f3f4f6;
+            overflow: hidden;
+        }
+        .title-font {
+            font-family: 'Orbitron', sans-serif;
+        }
+        .neon-glow {
+            box-shadow: 0 0 5px var(--glow-color), 0 0 10px var(--glow-color);
+        }
+        .neon-text {
+            text-shadow: 0 0 5px var(--glow-color), 0 0 10px var(--glow-color);
+        }
+        .ticker-viewport {
+            height: calc(var(--item-height) * 5);
+            width: 100%;
+            overflow: hidden;
+            position: relative;
+            border-radius: 12px;
+            border: 1px solid #374151;
+            background-color: rgba(0,0,0,0.1);
+        }
+        .ticker-reel {
+            width: 100%;
+            height: 100%;
+            position: relative;
+        }
+        .ticker-item {
+            height: var(--item-height);
+            position: absolute;
+            left: 0;
+            width: 100%;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            font-size: 1.5rem;
+            font-weight: 600;
+            color: white;
+            padding: 0 20px;
+            overflow: hidden;
+            white-space: nowrap;
+            text-overflow: ellipsis;
+        }
+        .ticker-viewport::before, .ticker-viewport::after {
+            content: '';
+            position: absolute;
+            left: 0;
+            width: 100%;
+            height: calc(var(--item-height) * 2);
+            z-index: 2;
+            pointer-events: none;
+        }
+        .ticker-viewport::before {
+            top: 0;
+            background: linear-gradient(to bottom, #111827, transparent);
+        }
+        .ticker-viewport::after {
+            bottom: 0;
+            background: linear-gradient(to top, #111827, transparent);
+        }
+        .pointer-line {
+            position: absolute;
+            top: 50%;
+            left: 0;
+            width: 100%;
+            height: var(--item-height);
+            transform: translateY(-50%);
+            border-top: 2px solid var(--glow-color);
+            border-bottom: 2px solid var(--glow-color);
+            box-shadow: 0 0 15px var(--glow-color);
+            z-index: 1;
+            opacity: 0.7;
+        }
+        .modal { transition: opacity 0.25s ease; }
+        .modal-content { transition: transform 0.25s ease; }
+        .task-item:hover .remove-btn { opacity: 1; transform: translateX(0); }
+        .remove-btn {
+            opacity: 0;
+            transform: translateX(10px);
+            transition: opacity 0.2s ease-in-out, transform 0.2s ease-in-out;
+        }
+        input[type="range"] {
+            -webkit-appearance: none;
+            appearance: none;
+            width: 100%;
+            height: 10px;
+            background: #374151;
+            border-radius: 5px;
+            outline: none;
+            opacity: 0.7;
+            transition: opacity .2s;
+        }
+        input[type="range"]:hover { opacity: 1; }
+        input[type="range"]::-webkit-slider-thumb {
+            -webkit-appearance: none;
+            appearance: none;
+            width: 25px;
+            height: 25px;
+            background: var(--glow-color);
+            border-radius: 50%;
+            cursor: pointer;
+        }
+        input[type="range"]::-moz-range-thumb {
+            width: 25px;
+            height: 25px;
+            background: var(--glow-color);
+            border-radius: 50%;
+            cursor: pointer;
+        }
+        .transition-all-layout {
+             transition: all 0.5s ease-in-out;
+        }
+        button:disabled {
+            opacity: 0.5;
+            cursor: not-allowed;
+            filter: grayscale(50%);
+        }
+        nav, nav * {
+            pointer-events: none !important;
+        }
+        #toggleManageBtn, #taskViewerBtn {
+            pointer-events: auto !important;
+        }
+        
+        .task-grid {
+            display: grid;
+            gap: 0.5rem;
+            width: 100%;
+            height: 100%;
+        }
+        .task-grid-item {
+            background-color: #374151;
+            border-radius: 8px;
+            color: #f3f4f6;
+            transition: background-color 0.3s ease, transform 0.3s ease;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            text-align: center;
+            padding: 4px;
+            font-size: 12px;
+            overflow: hidden;
+            word-break: break-word;
+        }
+        .task-grid-item:hover {
+            transform: scale(1.05);
+            z-index: 10;
+        }
+        .task-grid-item.completed {
+            background-color: #166534;
+            color: #d1fae5;
+        }
+
+        .confetti-particle {
+            position: fixed;
+            top: 105vh;
+            left: var(--x-start);
+            pointer-events: none;
+            font-size: var(--size);
+            opacity: 0;
+            animation: confetti-arc forwards;
+            animation-duration: var(--duration);
+            animation-timing-function: cubic-bezier(0.25, 1, 0.5, 1);
+            animation-delay: var(--delay);
+        }
+        @keyframes confetti-arc {
+            0% {
+                transform: translateY(0) translateX(0) rotate(0deg);
+                opacity: 1;
+            }
+            100% {
+                transform: translateY(-120vh) translateX(var(--x-end)) rotate(720deg);
+                opacity: 0;
+            }
+        }
+
+        /* Styles for new viewer control buttons */
+        .viewer-btn {
+            padding: 0.5rem 1rem;
+            background-color: #4b5563;
+            color: white;
+            transition: all 0.2s ease-in-out;
+            border: 1px solid #374151;
+            font-weight: 600;
+        }
+        .viewer-btn:hover {
+            background-color: #374151;
+        }
+        .viewer-btn.active {
+            background-color: var(--glow-color);
+            color: #111827;
+            box-shadow: 0 0 8px var(--glow-color);
+            border-color: var(--glow-color);
+            transform: scale(1.05);
+        }
+        #filterControls button:first-child, #sortControls button:first-child { border-top-left-radius: 0.5rem; border-bottom-left-radius: 0.5rem; }
+        #filterControls button:last-child, #sortControls button:last-child { border-top-right-radius: 0.5rem; border-bottom-right-radius: 0.5rem; }
+
+    </style>
+</head>
+<body class="bg-gray-900 flex flex-col items-center justify-center min-h-screen p-4 pt-24">
+
+    <nav class="fixed top-0 left-0 w-full z-50">
+        <div class="flex items-center justify-between p-2">
+            <img src="DSSIT.PNG" alt="DoubleShines Logo">
+             <div class="flex space-x-2">
+                 <button id="taskViewerBtn" class="bg-gray-700 text-white font-bold py-2 px-4 rounded-lg hover:bg-gray-600 transition-colors">Task Viewer</button>
+                 <button id="toggleManageBtn" class="bg-gray-700 text-white font-bold py-2 px-4 rounded-lg hover:bg-gray-600 transition-colors">Manage Tasks</button>
+             </div>
+        </div>
+    </nav>
+    
+    <div id="currentTaskContainer" class="w-full max-w-6xl mx-auto mb-8 p-6 rounded-2xl border border-gray-700 bg-gray-800/50 backdrop-blur-sm hidden">
+        <div class="text-center mb-4">
+            <h2 id="taskStatusHeader" class="title-font text-2xl font-bold text-white">Current Task</h2>
+            <p id="completionStats" class="text-xl font-semibold text-gray-200"></p>
+        </div>
+        <p id="currentTaskText" class="title-font text-4xl font-bold text-white neon-text text-center mb-6"></p>
+        <div id="currentTaskActions" class="flex justify-center space-x-4">
+            <button id="currentTaskSkipBtn" class="bg-gray-600 text-white font-bold py-2 px-6 rounded-full hover:bg-gray-700 transition-colors">Skip</button>
+            <button id="currentTaskCompleteBtn" class="bg-[var(--glow-color)] text-gray-900 font-bold py-2 px-6 rounded-full hover:bg-opacity-80 transition-colors">Completed</button>
+        </div>
+    </div>
+
+
+    <div id="app-container" class="w-full max-w-6xl mx-auto flex flex-col lg:flex-row items-start justify-center gap-8 lg:gap-16 transition-all-layout">
+        
+        <div id="spinnerContainer" class="flex flex-col items-center justify-center gap-6 w-full lg:w-full transition-all-layout">
+            <h1 class="title-font text-4xl md:text-5xl font-bold text-white neon-text text-center">DoubleShines Task Tracker</h1>
+            <div class="ticker-viewport">
+                <div class="pointer-line"></div>
+                <div id="tickerReel" class="ticker-reel"></div>
+            </div>
+            <button id="spinBtn" class="title-font bg-gray-800 text-white font-bold py-4 px-10 rounded-full text-2xl border-2 border-[var(--glow-color)] transition-all duration-300 ease-in-out hover:bg-[var(--glow-color)] hover:text-gray-900 hover:scale-105 active:scale-95 neon-glow">
+                SPIN
+            </button>
+        </div>
+
+        <div id="manageTasksPanel" class="w-full lg:w-1/3 bg-gray-800/50 backdrop-blur-sm p-6 rounded-2xl border border-gray-700 transition-all-layout hidden">
+            <h2 class="text-2xl font-bold mb-4 border-b border-gray-600 pb-2">Manage Tasks</h2>
+            <div class="flex mb-4">
+                <input type="text" id="taskInput" placeholder="Enter a new task..." class="flex-grow bg-gray-900 border border-gray-600 rounded-l-lg p-3 focus:outline-none focus:ring-2 focus:ring-[var(--glow-color)] focus:border-transparent transition-all">
+                <button id="addTaskBtn" class="bg-[var(--glow-color)] text-gray-900 font-bold p-3 rounded-r-lg hover:bg-opacity-80 transition-colors">+</button>
+            </div>
+            
+            <input type="text" id="searchInput" placeholder="Search tasks..." class="w-full bg-gray-900 border border-gray-600 rounded-lg p-3 mb-4 focus:outline-none focus:ring-2 focus:ring-[var(--glow-color)] focus:border-transparent transition-all">
+            
+            <div class="mb-4">
+                <label for="spinDuration" class="block text-sm font-medium text-gray-300 mb-2">Spin Duration: <span id="spinDurationValue">20</span> seconds</label>
+                <input type="range" id="spinDuration" min="5" max="30" value="20" step="1">
+            </div>
+
+            <div class="flex space-x-2 mb-4">
+                <button id="shuffleBtn" class="w-1/2 bg-blue-600 text-white font-bold py-2 px-4 rounded-lg hover:bg-blue-700 transition-colors">
+                    Shuffle
+                </button>
+                <button id="sortBtn" class="w-1/2 bg-green-600 text-white font-bold py-2 px-4 rounded-lg hover:bg-green-700 transition-colors">
+                    Sort A-Z
+                </button>
+            </div>
+            <div id="taskList" class="space-y-2 max-h-[350px] overflow-y-auto pr-2"></div>
+
+            <h3 class="text-xl font-bold mt-6 mb-2 border-t border-gray-600 pt-4">Completed Tasks</h3>
+            <div id="completedTaskList" class="space-y-2 max-h-[200px] overflow-y-auto pr-2 text-gray-400">
+                </div>
+        </div>
+    </div>
+
+    <div id="winnerModal" class="fixed inset-0 bg-black bg-opacity-70 flex items-center justify-center p-4 z-50 opacity-0 pointer-events-none">
+        <div id="modalContent" class="modal-content bg-gray-800 rounded-2xl p-8 text-center border-2 border-[var(--glow-color)] neon-glow transform scale-95">
+            <h2 class="text-xl font-light text-white mb-2">The chosen task is...</h2>
+            <p id="winnerText" class="title-font text-5xl font-bold text-white neon-text mb-8"></p>
+            <div class="flex justify-center space-x-4">
+                <button id="modalOkayBtn" class="bg-[var(--glow-color)] text-gray-900 font-bold py-2 px-6 rounded-full hover:bg-opacity-80 transition-colors">Okay</button>
+            </div>
+        </div>
+    </div>
+
+    <div id="taskViewerModal" class="fixed inset-0 bg-black bg-opacity-80 flex items-center justify-center p-4 z-[60] opacity-0 pointer-events-none transition-opacity duration-300">
+        <div class="bg-gray-900/80 backdrop-blur-md w-[95vw] h-[95vh] rounded-2xl p-6 border border-gray-700 flex flex-col">
+            <div class="flex justify-between items-center mb-4 flex-shrink-0">
+                <h2 class="text-3xl font-bold title-font text-white neon-text">Task Completion Viewer</h2>
+                <button id="closeViewerBtn" class="text-3xl text-gray-400 hover:text-white transition-colors">&times;</button>
+            </div>
+            
+            <div class="flex flex-wrap gap-4 items-center justify-center mb-4 p-2 bg-gray-800/50 rounded-lg flex-shrink-0">
+                <div class="flex items-center gap-2">
+                    <span class="font-bold text-gray-300">Filter:</span>
+                    <div id="filterControls" class="inline-flex rounded-md shadow-sm" role="group">
+                        <button type="button" data-filter="all" class="viewer-btn">All</button>
+                        <button type="button" data-filter="completed" class="viewer-btn">Completed</button>
+                        <button type="button" data-filter="incomplete" class="viewer-btn">Incomplete</button>
+                    </div>
+                </div>
+                <div class="flex items-center gap-2">
+                    <span class="font-bold text-gray-300">Sort:</span>
+                    <div id="sortControls" class="inline-flex rounded-md shadow-sm" role="group">
+                        <button type="button" data-sort="az" class="viewer-btn">A-Z</button>
+                        <button type="button" data-sort="random" class="viewer-btn">Shuffle</button>
+                    </div>
+                </div>
+            </div>
+
+            <div id="taskGrid" class="task-grid flex-grow min-h-0">
+                </div>
+        </div>
+    </div>
+
+    <footer style="position: fixed; left: 0; bottom: 0; width: 100%; padding: 10px; background-color: rgba(17, 24, 39, 0.8); color: white; z-index: 100;">
+        <div class="w-full px-3 grid grid-cols-1 md:grid-cols-3 items-center gap-2 text-sm">
+            <div class="text-left">
+                <p>Made by Gecko | Version 1.9.3 pl | © 2025</p>
+            </div>
+            <div class="text-center">
+                <p class="text-gray-200">If you enjoy this site, your support helps keep it alive and enables more tools in the future — thank you!</p>
+            </div>
+            <div class="text-right">
+                <a href="https://www.buymeacoffee.com/themrgecko" target="_blank" rel="noopener noreferrer" aria-label="Buy me a coffee"
+                   class="inline-block bg-yellow-400 hover:bg-yellow-300 text-gray-900 font-semibold px-4 py-2 rounded shadow">
+                    Buy me a coffee
+                </a>
+            </div>
+        </div>
+    </footer>
+
+    <script>
+        // --- Default Task Lists by Tier ---
+        // Medium (existing default list) — keep as-is to avoid breaking current users
+        const defaultTasks = [
+  `Win a Game of Castle Wars`,
+  `Visit the Everlight dig site`,
+  `Visit Mos Le'Harmless`,
+  `Visit Harmony Island`,
+  `Visit any Runecrafting altar through the Abyss`,
+  `Use the Rune Goldberg Machine to create Vis wax`,
+  `Use the range in Lumbridge Castle to bake a cake`,
+  `Use the fairy ring in the Amlodd district`,
+  `Use the Chivalry Prayer`,
+  `Use an Elven Teleport Crystal`,
+  `Upgrade a piece of Death Skull or Deathwarden equipment to tier 50`,
+  `Unlock all of the Free to Play Lodestones`,
+  `Travel to the Mammoth Iceberg`,
+  `Teleport using Law runes`,
+  `Take a medium companion through a medium route of Temple Trekking`,
+  `Steal some Wine of Zamorak from the Captured Temple, south of Goblin Village`,
+  `Steal from the lamp stall in Menaphos`,
+  `Steal from the fish stall in Rellekka`,
+  `Steal a lantern from a cave goblin`,
+  `Smith 25 of any metal weapon or armour piece`,
+  `Siphon Rune dust from a RuneSphere in the RuneSpan`,
+  `Siphon from a nature esshound in the Runespan`,
+  `Set up a dwarf cannon`,
+  `Search the Grand Gold Chest in room 6 of Pyramid Plunder in Sophanem`,
+  `Search the Grand Gold Chest in room 5 of Pyramid Plunder in Sophanem`,
+  `Search the Grand Gold Chest in room 4 of Pyramid Plunder in Sophanem`,
+  `Scatter 100 ashes of any kind`,
+  `Sacrifice Dragon bones on the Chaos Altar`,
+  `Ride a mine cart into Keldagrim`,
+  `Restore a Pontifex signet ring`,
+  `Restore 500 Prayer Points at an Altar at once`,
+  `Repair the statue of Het at Het's Oasis`,
+  `Reach world 25 in Shattered Worlds`,
+  `Reach total level 500`,
+  `Reach level 60 in any skill`,
+  `Reach level 50 in any skill`,
+  `Reach level 40 in any skill`,
+  `Reach level 30 in any skill`,
+  `Reach combat level 50`,
+  `Reach at least level 30 in all non-elite skills`,
+  `Reach at least level 20 in all non-elite skills`,
+  `Reach at least level 10 in all non-elite skills`,
+  `Reach at least level 5 in all non-elite skills`,
+  `Purchase the herb bag and the herb bag upgrade from the Herby Werby reward shop`,
+  `Plant seeds in any farming patch 100 times`,
+  `Pickpocket anyone 200 times`,
+  `Pickpocket a Varrock guard`,
+  `Pickpocket a Knight of Ardougne 50 times`,
+  `Pickpocket a H.A.M. member`,
+  `Perform a Special Attack`,
+  `Open the crystal chest in Taverley`,
+  `Open 20 Igneous Geodes`,
+  `Offer 100 bones of any kind to an altar`,
+  `Obtain 50 Quest Points`,
+  `Move Your House to Rellekka`,
+  `Move your house to Prifddinas`,
+  `Mine some orichalcite in the Mining Guild`,
+  `Mine some Ore With a Rune Pickaxe`,
+  `Mine any ore 200 times`,
+  `Mine a ruby from a gem rock in Shilo Village`,
+  `Mine a drakolith rock in the Tai Bwo Wannai mine`,
+  `Mine 200 soft clay in Prifddinas`,
+  `Mine 50 pure essence`,
+  `Mine 40 Runite Ore`,
+  `Mine 30 Adamant Ore`,
+  `Mine 20 Mithril Ore`,
+  `Medium Falador diary`,
+  `Medium desert tasks`,
+  `Make one of each type of cocktail`,
+  `Make a Stew`,
+  `Make a Pineapple pizza`,
+  `Make a Chocolate Cake`,
+  `Make a batch of cannonballs in Port Phasmatys`,
+  `Make a 4-dose Potion`,
+  `Make 200 potions of any kind`,
+  `Make 30 Prayer Potions`,
+  `Make 20 Super Attack Potions`,
+  `Light a Bullseye Lantern`,
+  `Learn how to craft moonstone jewellery`,
+  `Kill the lesser demon in the Wizards' Tower`,
+  `Kill the Giant Mole`,
+  `Kill the Giant Mole 100 times`,
+  `Kill a metal dragon in Brimhaven Dungeon`,
+  `Kill a blue dragon in Taverley dungeon`,
+  `Kill 25 Yaks`,
+  `Interact with a pet rock`,
+  `Hunt a yellow wizard in the RuneSpan and give them some items`,
+  `Hunt 10 Spotted Kebbits with the help of a falcon`,
+  `Have either a Putrid Zombie or Vengeful Ghost conjured while fighting the matching creature`,
+  `Harvest produce from 5 animals on Anachronia farm`,
+  `Harvest bittercap mushrooms in the farming patch near Canifis`,
+  `Harvest any memory from a wisp 200 times`,
+  `Harvest a herb from the troll stronghold herb patch`,
+  `Harvest 100 sparkling energy from Sparkling Wisps`,
+  `Harvest 5 Grimy Ranarr`,
+  `Given by Reldo in Varrock Palace's library for completing all Medium Tasks in Varrock`,
+  `Given by Rat Burgiss south of Varrock for completing all Easy Tasks in Varrock`,
+  `Given by Ned in Draynor Village for completing all Medium Tasks in Lumbridge`,
+  `Given by Explorer Jack in Lumbridge for completing all Beginner Tasks in Lumbridge`,
+  `Given by Bob, the axe seller in Lumbridge, for completing all Easy Tasks in Lumbridge`,
+  `Give Snoop some clean Dwarf weed`,
+  `Get Stiles to exchange some of your fish for bank notes`,
+  `Gather and convert 50 bright memories`,
+  `Fully complete the Stronghold of Player Safety`,
+  `Fletch 400 Steel arrows`,
+  `Fletch 100 Iron bolts`,
+  `Fletch 50 Maple shieldbow (unstrung)`,
+  `Fletch 50 Maple shieldbow (unstrung) in Kandarin`,
+  `Fletch 1,000 Arrow Shafts`,
+  `Finish a game of Werewolf Skullball`,
+  `Equip Iban's staff`,
+  `Equip any elemental battlestaff`,
+  `Equip any 2 pieces of an Elegant outfit`,
+  `Equip an Ogre Forester Hat`,
+  `Equip an Obsidian cape`,
+  `Equip an Iron Crossbow`,
+  `Equip a Tzhaar-Ket-Om`,
+  `Equip a Toktz-Xil-Ek`,
+  `Equip a Toktz-Xil-Ak`,
+  `Equip a Toktz-Ket-Xil`,
+  `Equip a Spottier Cape`,
+  `Equip a Saradomin, Zamorak, or Guthix cape`,
+  `Equip a Salve Amulet (e)`,
+  `Equip a piece of Barrows armour`,
+  `Equip a mystic staff`,
+  `Equip a Maple shieldbow`,
+  `Equip a Helm of Neitiznot`,
+  `Equip a Granite Shield`,
+  `Equip a full set of Steel armour`,
+  `Equip a full set of Rune armour`,
+  `Equip a full set of Red Dragonhide armour`,
+  `Equip a full set of Mystic robes`,
+  `Equip a full set of Mithril armour`,
+  `Equip a full set of Graahk, Larupia or Kyatt hunter gear`,
+  `Equip a full set of Blue Dragonhide armour`,
+  `Equip a full set of Batwing robes`,
+  `Equip a full set of Adamant armour`,
+  `Equip a defender`,
+  `Equip a composite bow of any kind`,
+  `Equip a Barrows weapon`,
+  `Enter the Wizards' Guild`,
+  `Enter the Warriors Guild`,
+  `Enter the Hardwood Grove in Tai Bwo Wannai`,
+  `Enter the Fishing Guild`,
+  `Enter the Crafting Guild`,
+  `Enter the Cooks' Guild`,
+  `Easy Falador diary`,
+  `Easy desert tasks`,
+  `Earn a total of 10,000 beans from selling animals`,
+  `Drink from the Tears of Guthix`,
+  `Disgruntle an inhabitant of Um by wearing a bedsheet`,
+  `Defeat the six Barrows Brothers and loot their chest`,
+  `Defeat the six Barrows Brothers and loot their chest`,
+  `Defeat the Rammernaut`,
+  `Defeat the King Black Dragon`,
+  `Defeat the King Black Dragon`,
+  `Defeat the Kalphite Queen`,
+  `Defeat the Kalphite Queen 100 times`,
+  `Defeat Bossy McBossface's first mate`,
+  `Defeat Bossy McBoss Face`,
+  `Defeat any of the Dagannoth Kings 100 times`,
+  `Defeat any of the Dagannoth Kings 1 time`,
+  `Defeat a TzHaar`,
+  `Defeat a Mithril Dragon`,
+  `Defeat a Kurask in the Fremennik Province`,
+  `Defeat a Jelly in the Fremennik Province`,
+  `Defeat a Fire Giant in Kandarin`,
+  `Defeat a Dagannoth in the Fremennik Province`,
+  `Defeat 100 bosses in the Dominion Tower`,
+  `Defeat 20 Bound Skeletons`,
+  `Defeat 10 Fetid Zombies`,
+  `Defeat 5 Green dragons`,
+  `Cut a willow tree east of Lumbridge Castle`,
+  `Create a Mithril Grapple`,
+  `Craft some Combination runes`,
+  `Craft 100 runes`,
+  `Craft 50 Water Runes`,
+  `Craft 50 Nature runes`,
+  `Craft 50 Death Runes`,
+  `Craft 50 cosmic runes`,
+  `Craft 50 Astral Runes`,
+  `Craft 1,000 runes`,
+  `Cook 200 fish`,
+  `Convert 100 gleaming memories in an energy rift`,
+  `Conjure a Phantom Guardian at the City of Um ritual site`,
+  `Complete Throne of Miscellania`,
+  `Complete this quest`,
+  `Complete this quest`,
+  `Complete this quest`,
+  `Complete this quest`,
+  `Complete this quest`,
+  `Complete this quest`,
+  `Complete this quest`,
+  `Complete this quest`,
+  `Complete this miniquest`,
+  `Complete the Penguin Agility Course`,
+  `Complete the novice sections of the Anachronia agility course`,
+  `Complete The Needle Skips`,
+  `Complete the medium Wilderness Diary`,
+  `Complete the medium Tirannwn Diary`,
+  `Complete the medium Morytania Diary`,
+  `Complete the medium Karamja Diary`,
+  `Complete the Medium Fremennik Diary`,
+  `Complete the medium City of Um Diary`,
+  `Complete the Medium Ardougne Diary`,
+  `Complete the easy Wilderness Diary`,
+  `Complete the easy Tirannwn Diary`,
+  `Complete the easy Morytania Diary`,
+  `Complete the easy Karamja Diary`,
+  `Complete the Easy Fremennik Diary`,
+  `Complete the easy City of Um Diary`,
+  `Complete the Easy Ardougne Diary`,
+  `Complete the beginner sections of the Anachronia agility course`,
+  `Complete the Barbarian Outpost Agility Course`,
+  `Complete Royal Trouble`,
+  `Complete Haunted Mine`,
+  `Complete Elemental Workshop II`,
+  `Complete a Medium clue scroll`,
+  `Complete a lap of the Het's Oasis agility course`,
+  `Complete a Hard clue scroll`,
+  `Complete a communion ritual using a memento`,
+  `Complete a ceremonial sword at the Artisans' Workshop`,
+  `Complete 100 clues of any tier`,
+  `Complete 75 Medium clue scrolls`,
+  `Complete 75 Easy clue scrolls`,
+  `Complete 25 Medium clue scrolls`,
+  `Complete 25 laps of any Agility course`,
+  `Complete 25 Hard clue scrolls`,
+  `Complete 25 Easy clue scrolls`,
+  `Complete 10 laps of the Wilderness agility course`,
+  `Collect 25 unique items for the General clue rewards collection log`,
+  `Collect 10 unique items for the Medium clue rewards collection log`,
+  `Collect 10 unique items for the Easy clue rewards collection log`,
+  `Collect 5 unique items for the Medium clue rewards collection log`,
+  `Collect 5 unique items for the Hard clue rewards collection log`,
+  `Collect 5 unique items for the Easy clue rewards collection log`,
+  `Climb to the top of the lighthouse`,
+  `Clear the Fort debris at the Kharid-et Dig Site`,
+  `Clean 200 of any herb`,
+  `Clean 50 Grimy Ranarr`,
+  `Clean 50 Grimy Avantoe`,
+  `Churn some butter`,
+  `Chop any tree 200 times`,
+  `Chop a willow tree`,
+  `Chop 10 Arctic Pine trees`,
+  `Check a grown Papaya Tree inside Tree Gnome Stronghold`,
+  `Check a grown Papaya Tree in Lletya`,
+  `Check a grown Fruit Tree`,
+  `Check a grown banana tree on Karamja`,
+  `Charge an Amulet of Glory in the Heroes' Guild`,
+  `Catch any fish 200 times`,
+  `Catch a Snowy Knight`,
+  `Catch a salmon on Karamja`,
+  `Catch a Red Salamander`,
+  `Catch a Gourmet Impling`,
+  `Catch a catfish`,
+  `Catch 200 Hunter creatures`,
+  `Catch 100 Lobsters`,
+  `Catch 50 Swordfish`,
+  `Catch 50 Salmon`,
+  `Catch 35 Implings of any kind`,
+  `Catch 25 lobsters on Karamja`,
+  `Catch 25 Implings of any kind`,
+  `Catch 20 implings in Puro-Puro`,
+  `Catch 10 Pike`,
+  `Catch 10 Pawyas in Isafdar`,
+  `Catch 10 Green salamanders`,
+  `Cast the Claws of Guthix special attack`,
+  `Cast Moonclan Teleport`,
+  `Buy some runes from Ali Morrisane`,
+  `Bury some Baby Dragon bones`,
+  `Bury 5 Dragon bones`,
+  `Burn any logs 200 times`,
+  `Burn 50 Maple logs`,
+  `Burn 25 Willow logs`,
+  `Build your Player Lodge on Anachronia`,
+  `Browse through Oziach's Armour Shop`,
+  `Activate Protect from Melee prayer`,
+  `Activate and teleport from each of the Wilderness teleport obelisks`,
+  `Visit Dragontooth Island by boat`,
+  `View the skillguide`,
+  `Using either a Silver Sickle or the Ivandis Flail, grow some fungus in the swamp using Bloom`,
+  `Use the Home Teleport spell to return to Lumbridge`,
+  `Use the Bank on Jatizso or Neitiznot`,
+  `Use the bank in the workshop at Fort Forinthry`,
+  `Use the Bank in Lletya`,
+  `Use the bank at the Mage Arena`,
+  `Use any of the magic carpets in the desert`,
+  `Use an ectophial to return to Port Phasmatys`,
+  `Upgrade a piece of Death Skull or Deathwarden equipment to tier 20`,
+  `Tiffy Time`,
+  `Teleport to Castle Wars with a Ring of Dueling`,
+  `Talk to Hans and find out how old you are`,
+  `Switch to the Lunar Spellbook at the astral altar`,
+  `Surge under the spine on Anachronia`,
+  `Surge a distance of one tile`,
+  `Store the items required for an emote clue in a Treasure Trail hidey-hole`,
+  `Steal from the Varrock tea stall`,
+  `Steal from any stall`,
+  `Steal from any stall 10 times`,
+  `Squish 10 corrupted scarabs`,
+  `Spin a Ball of Wool`,
+  `Spin 5 bowstring`,
+  `Smith any bronze item`,
+  `Smith 10 of any metal weapon or armour piece`,
+  `Smelt a steel bar in the furnace in Lumbridge`,
+  `Smelt a bronze bar`,
+  `Smelt 10 bronze bars`,
+  `Siphon from a fire essling in the Runespan`,
+  `Set sail for Anachronia`,
+  `Sell an item to any store`,
+  `Search the Grand Gold Chest in room 3 of Pyramid Plunder in Sophanem`,
+  `Search the Grand Gold Chest in room 2 of Pyramid Plunder in Sophanem`,
+  `Search the Grand Gold Chest in room 1 of Pyramid Plunder in Sophanem`,
+  `Scatter some Ashes`,
+  `Scatter 25 ashes of any kind`,
+  `Run out of Prayer points`,
+  `Return a free item to any store`,
+  `Restore your prayer using the altar in Lletya`,
+  `Restore 50 Prayer Points at an Altar at once`,
+  `Reach total level 100`,
+  `Reach total level 50`,
+  `Reach level 20 in any skill`,
+  `Reach level 10 in any skill`,
+  `Reach level 5 in any skill`,
+  `Reach combat level 10`,
+  `Reach combat level 5`,
+  `Reach a score of 10 using the strange switches in the Wilderness`,
+  `Rake any farming patch`,
+  `Prospect any rock`,
+  `Progress through the Leagues tutorial to unlock your first relic`,
+  `Pray to Bandos's remains`,
+  `Plant seeds in any farming patch`,
+  `Plant seeds in any farming patch 10 times`,
+  `Pickpocket from a man or woman`,
+  `Pickpocket from a man or woman 10 times`,
+  `Pickpocket anyone 5 times`,
+  `Pick wheat from a field`,
+  `Pick a pineapple on Karamja`,
+  `Pick 5 Flax`,
+  `Pass through the Holy barrier`,
+  `Pan for an uncut jade at the Digsite`,
+  `Open 30 Sedimentary Geodes`,
+  `Offer 25 bones of any kind to an altar`,
+  `Offer 5 bones of any kind to an altar`,
+  `Obtain a Naragi engram from Orla Fairweather`,
+  `Obtain 100 potent herbs from Herby Werby`,
+  `Observe all the large dragonkin statues around Anachronia`,
+  `Mine some iron ore in the mining spot south-west of Varrock`,
+  `Mine some coal in the centre of Barbarian village`,
+  `Mine iron ore from the mining site south-west of Lumbridge Swamp`,
+  `Mine clay`,
+  `Mine any ore 5 times`,
+  `Mine a tin ore`,
+  `Mine a gem rock at the Al Kharid mine`,
+  `Mine a copper ore`,
+  `Mine 10 tin ore`,
+  `Mine 10 copper ore`,
+  `Milk a cow`,
+  `Make use of either an autoheater, gem bag, herbicide, bonecrusher or charming imp`,
+  `Make some flour`,
+  `Make some Bread`,
+  `Make soft clay`,
+  `Make an Attack Potion`,
+  `Make a plank yourself on the sawmill in Fort Forinthry`,
+  `Make a Pineapple Punch cocktail`,
+  `Make a Necromancy Potion`,
+  `Make 5 potions of any kind`,
+  `Maintain nearly maximum stamina when mining for 60 seconds`,
+  `Listen to any musician`,
+  `Level up any of your skills for the first time`,
+  `Let Brimstail teleport you to the Rune Essence mine`,
+  `Learn how to raise your own animals at Manor Farm`,
+  `Kill anything on the ground floor of the Slayer Tower`,
+  `Kill an imp`,
+  `Kill a snake`,
+  `Kill a mugger near the Edgeville lodestone`,
+  `Kill a goblin raider boss in the Goblin Village`,
+  `Kill a goblin in Lumbridge`,
+  `Kill a giant spider in Lumbridge or Lumbridge Swamp`,
+  `Kill a giant rat in Lumbridge Swamp`,
+  `Kill a dark wizard`,
+  `Kill a crocodile`,
+  `Kill a chicken`,
+  `Jump over the Wilderness wall`,
+  `Have Ned make you some rope from balls of wool`,
+  `Have Elsie tell you a story`,
+  `Have a tool leprechaun note any produce`,
+  `Harvest any memory from a wisp 5 times`,
+  `Harvest a rose at Het's Oasis`,
+  `Harvest a memory from a pale wisp`,
+  `Harvest a Grimy Marrentill`,
+  `Harvest 10 memories from a pale wisp`,
+  `Harvest 10 Grimy Tarromin`,
+  `Hand Simon Templeton a pyramid top`,
+  `Give Thurgo a redberry pie`,
+  `Give Bill a beer in Fort Forinthry`,
+  `Give a bone to one of Varrock's stray dogs (or to your pet stray dog if you have one)`,
+  `Get Harvey's ball back from the scary lady`,
+  `Gate Spectre-ations`,
+  `Fletch some Arrow Shafts`,
+  `Fletch an Oak Shortbow (unstrung)`,
+  `Fletch 50 Bronze bolts`,
+  `Fill up Luthas' crate near the Musa Point plantation with bananas and receive 30 coins for your work`,
+  `Fill a Charmed Sack with corruption at the Nexus in Lumbridge Swamp`,
+  `Equip a Marksman hat`,
+  `Equip a full set of Spider silk robes`,
+  `Equip a full set of Iron armour without any upgrades`,
+  `Equip a full set of Imphide robes`,
+  `Equip a full set of Green Dragonhide armour`,
+  `Enter the Wilderness from Ardougne`,
+  `Enter the Earth Altar using an earth tiara or talisman`,
+  `Enter the chaos tunnels from an entrance in the Wilderness`,
+  `Enter the Brimhaven Dungeon`,
+  `Enter Menaphos`,
+  `Eat an onion`,
+  `Eat a cabbage`,
+  `Eat a baked potato`,
+  `Drink a Strength Potion`,
+  `Deposit an item with Peer the Seer`,
+  `Defeat the Chaos Elemental`,
+  `Defeat the Chaos Elemental`,
+  `Defeat a Werewolf in Morytania`,
+  `Defeat a Troll in the Fremennik Province`,
+  `Defeat a Tortoise with riders in Kandarin`,
+  `Defeat a Rock Crab in the Fremennik Province`,
+  `Defeat a Greater Demon on Karamja`,
+  `Defeat a Cockatrice in the Fremennik Province`,
+  `Defeat a Black Unicorn in the Wilderness`,
+  `Defeat 5 Feral Vampyres in the Haunted Woods`,
+  `Dance in the Falador party room`,
+  `Cross the spiky pit using the stepping stones within Brimhaven Dungeon`,
+  `Create a spirit kalphite pouch at the obelisk south west of Pollnivneach`,
+  `Create a Guthix Rest Potion`,
+  `Craft some spirit or bone runes`,
+  `Craft a water rune at the Water Altar`,
+  `Craft a snelm`,
+  `Cook some rat meat on a campfire in Lumbridge Swamp`,
+  `Cook shrimp, meat, or chicken`,
+  `Cook a Rabbit in Tirannwn`,
+  `Cook 10 shrimp, meat, or chicken`,
+  `Cook 5 fish`,
+  `Convert at least one pale memory into energy`,
+  `Conjure a zombie at the City of Um ritual site`,
+  `Conjure a skeleton at the City of Um ritual site`,
+  `Conjure a ghost at the City of Um ritual site`,
+  `Complete You Are It`,
+  `Complete this quest`,
+  `Complete this quest`,
+  `Complete the Helping Laniakea miniquest`,
+  `Complete the Gnome Stronghold Agility Course`,
+  `Complete the base camp tutorial`,
+  `Complete the Archaeology tutorial`,
+  `Complete Raksha, the Shadow Colossus quest`,
+  `Complete an Easy Temple Trek`,
+  `Complete an Easy clue scroll`,
+  `Complete a task from Jacquelyn, the Lumbridge Slayer master`,
+  `Complete a Lesser Necroplasm ritual`,
+  `Complete a lap of the Burthorpe Agility course`,
+  `Complete a Frozen floor in Daemonheim`,
+  `Complete 10 laps of any Agility course`,
+  `Complete 5 Slayer tasks`,
+  `Collect 10 unique items for the General clue rewards collection log`,
+  `Collect 5 seaweed from anywhere on Karamja`,
+  `Climb to the top of the Wizards' Tower`,
+  `Climb the Tower of Voices`,
+  `Clean 15 Grimy Tarromin`,
+  `Clean 10 of any herb`,
+  `Clean 5 of any herb`,
+  `Clean 5 Grimy Guam`,
+  `Claim a ticket from Brimhaven Agility Arena`,
+  `Claim a free item from any store`,
+  `Claim a free clue scroll from Zaida at the Grand Exchange`,
+  `Chop any tree 5 times`,
+  `Chop an oak tree`,
+  `Chop a basic tree`,
+  `Chop 10 basic trees`,
+  `Charter a ship from Port Tyras`,
+  `Catch some shrimp in the fishing spot to the east of Lumbridge Swamp`,
+  `Catch any fish 5 times`,
+  `Catch an anchovy`,
+  `Catch a Wild Kebbit`,
+  `Catch a whirligig at Het's Oasis`,
+  `Catch a shrimp`,
+  `Catch a Sapphire Glacialis`,
+  `Catch a Karambwanji`,
+  `Catch a herring`,
+  `Catch a Crimson Swift in the Feldip Hills`,
+  `Catch a Baby Impling`,
+  `Catch 10 shrimp`,
+  `Catch 10 Implings of any kind`,
+  `Catch 5 Hunter creatures`,
+  `Bury any bones`,
+  `Bury any bones 10 times`,
+  `Burn some logs using the everlasting bonfire in the Tower of Voices`,
+  `Burn any logs`,
+  `Burn any logs 5 times`,
+  `Burn any food`,
+  `Build a God statue in Taverley`,
+  `Be assigned a Slayer task in Shilo Village`,
+  `Attempt to pass a leaf trap`,
+  `Add any compostable item to a compost bin`,
+  `Activate the Wilderness lodestone`,
+  `Activate the Tirannwn lodestone`,
+  `Activate the thick skin, rock skin, or steel skin Prayer`,
+  `Activate the Prifddinas lodestone`,
+  `Activate the Canifis lodestone`,
+  `Activate Superhuman or Ultimate Strength and Improved or Incredible Reflexes prayers at the same time`
+];
+
+    // DOM Elements
+        const tickerReel=document.getElementById("tickerReel"),spinBtn=document.getElementById("spinBtn"),taskInput=document.getElementById("taskInput"),addTaskBtn=document.getElementById("addTaskBtn"),shuffleBtn=document.getElementById("shuffleBtn"),sortBtn=document.getElementById("sortBtn"),spinDurationSlider=document.getElementById("spinDuration"),spinDurationValue=document.getElementById("spinDurationValue"),taskList=document.getElementById("taskList"),winnerModal=document.getElementById("winnerModal"),modalContent=document.getElementById("modalContent"),winnerText=document.getElementById("winnerText"),modalOkayBtn=document.getElementById("modalOkayBtn"),toggleManageBtn=document.getElementById("toggleManageBtn"),manageTasksPanel=document.getElementById("manageTasksPanel"),spinnerContainer=document.getElementById("spinnerContainer"),appContainer=document.getElementById("app-container"),currentTaskContainer=document.getElementById("currentTaskContainer"),currentTaskText=document.getElementById("currentTaskText"),currentTaskSkipBtn=document.getElementById("currentTaskSkipBtn"),currentTaskCompleteBtn=document.getElementById("currentTaskCompleteBtn"),searchInput=document.getElementById("searchInput"),completedTaskList=document.getElementById("completedTaskList"),currentTaskActions=document.getElementById("currentTaskActions"),completionStats=document.getElementById("completionStats"),taskStatusHeader=document.getElementById("taskStatusHeader"),taskViewerBtn=document.getElementById("taskViewerBtn"),taskViewerModal=document.getElementById("taskViewerModal"),closeViewerBtn=document.getElementById("closeViewerBtn"),taskGrid=document.getElementById("taskGrid"),filterControls=document.getElementById("filterControls"),sortControls=document.getElementById("sortControls");
+
+    // Tier Unlock Overlay Elements (created later in DOM)
+    let tierUnlockOverlay, tierUnlockBtn;
+
+    // State variables
+    let tasks=[],isSpinning=!1,lastWinner=null,audioContext=null,isSoundPlaying=!1,soundTimeoutId=null,taskViewerFilter="all",taskViewerSort="az";
+    // New: Tier management state
+    const TIERS={MEDIUM:"medium",HARD:"hard"};
+    const TIER_STORAGE_KEY = "taskTickerTier_v1";
+    let currentTier = TIERS.MEDIUM;
+    // Active default list for computations (starts as medium, can switch to hard)
+    let defaultTaskList = defaultTasks;
+        
+        // Constants
+        const ITEM_HEIGHT=60,VISIBLE_ITEMS=9,TASKS_STORAGE_KEY_OLD="taskTickerTasks",TASKS_STORAGE_KEY="taskTickerTasks_v2",CURRENT_TASK_STORAGE_KEY="taskTickerCurrentTask_v2";
+        let virtualItems=[];
+        
+        // --- Sound Synthesis Functions ---
+        function getAudioContext(){return audioContext||(audioContext=new(window.AudioContext||window.webkitAudioContext)),audioContext}
+        function createTickSound(e,t){const o=e.createOscillator(),n=e.createGain();o.connect(n),n.connect(e.destination),o.type="sine",o.frequency.setValueAtTime(440,t),n.gain.setValueAtTime(.01,t),n.gain.linearRampToValueAtTime(.3,t+.005),n.gain.linearRampToValueAtTime(1e-4,t+.05),o.start(t),o.stop(t+.05)}
+        function createFlourishSound(e,t){const o=e.createOscillator(),n=e.createGain();o.connect(n),n.connect(e.destination),o.type="sine",o.frequency.setValueAtTime(880,t),o.frequency.linearRampToValueAtTime(1760,t+.2),n.gain.setValueAtTime(.01,t),n.gain.linearRampToValueAtTime(.5,t+.01),n.gain.linearRampToValueAtTime(1e-4,t+.8),o.start(t),o.stop(t+.8)}
+        function createShuffleSound(){const e=getAudioContext(),t=.3,o=e.currentTime,n=e.createOscillator(),i=e.createGain();n.connect(i),i.connect(e.destination),n.type="sine",n.frequency.setValueAtTime(1e3,o),n.frequency.linearRampToValueAtTime(100,o+t),i.gain.setValueAtTime(.5,o),i.gain.linearRampToValueAtTime(1e-4,o+t),n.start(o),n.stop(o+t)}
+        function startSpinSound(){if(isSoundPlaying)return;isSoundPlaying=!0;const e=getAudioContext();soundTimeoutId&&clearTimeout(soundTimeoutId);const t=parseFloat(spinDurationSlider.value),o=Math.min(10+.2*tasks.length,40),n=1,i=e.currentTime+.1;let a=i,s=0;const l=setInterval(()=>{if(s>=t)return clearInterval(l),createFlourishSound(e,a),void(soundTimeoutId=setTimeout(()=>{isSoundPlaying=!1,soundTimeoutId=null,audioContext&&"running"===audioContext.state&&(audioContext.close(),audioContext=null)},1e3*(a-e.currentTime+1)));createTickSound(e,a);const d=s/t;let r=o-(o-n)*d;r=Math.max(r,n);const c=1/Math.max(r,.1);a+=c,s+=c,a>i+t+.5&&(clearInterval(l),createFlourishSound(e,i+t),soundTimeoutId=setTimeout(()=>{isSoundPlaying=!1,soundTimeoutId=null,audioContext&&"running"===audioContext.state&&(audioContext.close(),audioContext=null)},1e3*(i+t-e.currentTime+1)))},10)}
+        function createSuccessChime(){const e=getAudioContext(),t=e.currentTime,o=e.createGain();o.gain.setValueAtTime(.3,t),o.gain.exponentialRampToValueAtTime(1e-4,t+1.2);const n=e.createOscillator();n.type="sine",n.frequency.setValueAtTime(523.25,t),n.frequency.setValueAtTime(659.25,t+.1);const i=e.createOscillator();i.type="sine",i.frequency.setValueAtTime(783.99,t+.2),n.connect(o),i.connect(o),o.connect(e.destination),n.start(t),n.stop(t+.2),i.start(t+.2),i.stop(t+1)}
+        // Special, ominous multi-second fanfare for Hard tier unlock
+        function playUnlockFanfare(){
+            const ctx = getAudioContext();
+            const t0 = ctx.currentTime + 0.05;
+            const master = ctx.createGain();
+            master.gain.setValueAtTime(0.9, t0);
+            master.connect(ctx.destination);
+
+            // Sub-bass drone (incoming doom)
+            const sub = ctx.createOscillator();
+            const subGain = ctx.createGain();
+            sub.type = 'sine';
+            sub.frequency.setValueAtTime(65, t0); // C2-ish
+            sub.frequency.linearRampToValueAtTime(55, t0 + 4.0);
+            subGain.gain.setValueAtTime(0.0001, t0);
+            subGain.gain.exponentialRampToValueAtTime(0.5, t0 + 0.6);
+            subGain.gain.exponentialRampToValueAtTime(0.15, t0 + 3.5);
+            subGain.gain.exponentialRampToValueAtTime(0.0001, t0 + 4.6);
+            sub.connect(subGain); subGain.connect(master);
+            sub.start(t0); sub.stop(t0 + 4.7);
+
+            // Dissonant low brass chord (tension)
+            const chordStart = t0 + 0.6;
+            const chordEnd = t0 + 4.4;
+            const chordNotes = [220.00, 261.63, 311.13]; // A3, C4, D#4
+            chordNotes.forEach((f, idx) => {
+                const o = ctx.createOscillator();
+                const g = ctx.createGain();
+                const lp = ctx.createBiquadFilter();
+                o.type = 'sawtooth';
+                o.frequency.setValueAtTime(f, chordStart);
+                o.detune.setValueAtTime(idx === 0 ? -4 : idx === 2 ? 8 : 0, chordStart);
+                lp.type = 'lowpass';
+                lp.frequency.setValueAtTime(400, chordStart);
+                lp.frequency.linearRampToValueAtTime(1200, chordStart + 1.0);
+                lp.frequency.linearRampToValueAtTime(600, chordEnd);
+                g.gain.setValueAtTime(0.0001, chordStart);
+                g.gain.exponentialRampToValueAtTime(0.45, chordStart + 0.4);
+                g.gain.exponentialRampToValueAtTime(0.2, chordStart + 2.5);
+                g.gain.exponentialRampToValueAtTime(0.0001, chordEnd);
+                o.connect(lp); lp.connect(g); g.connect(master);
+                o.start(chordStart); o.stop(chordEnd + 0.1);
+            });
+
+            // Noise riser (whoosh)
+            const noiseDur = 3.0;
+            const noiseStart = t0 + 0.4;
+            const noiseBuffer = ctx.createBuffer(1, Math.floor(ctx.sampleRate * noiseDur), ctx.sampleRate);
+            const data = noiseBuffer.getChannelData(0);
+            for (let i = 0; i < data.length; i++) data[i] = Math.random() * 2 - 1;
+            const noise = ctx.createBufferSource(); noise.buffer = noiseBuffer; noise.loop = false;
+            const bp = ctx.createBiquadFilter(); bp.type = 'bandpass';
+            bp.frequency.setValueAtTime(300, noiseStart);
+            bp.frequency.exponentialRampToValueAtTime(3000, noiseStart + noiseDur);
+            const nGain = ctx.createGain();
+            nGain.gain.setValueAtTime(0.0001, noiseStart);
+            nGain.gain.exponentialRampToValueAtTime(0.35, noiseStart + 1.5);
+            nGain.gain.exponentialRampToValueAtTime(0.0001, noiseStart + noiseDur);
+            noise.connect(bp); bp.connect(nGain); nGain.connect(master);
+            noise.start(noiseStart);
+
+            // Timpani-like hits (low booms)
+            function boom(at){
+                const o = ctx.createOscillator();
+                const g = ctx.createGain();
+                o.type = 'sine';
+                o.frequency.setValueAtTime(110, at);
+                o.frequency.exponentialRampToValueAtTime(70, at + 0.3);
+                g.gain.setValueAtTime(0.0001, at);
+                g.gain.exponentialRampToValueAtTime(0.7, at + 0.03);
+                g.gain.exponentialRampToValueAtTime(0.0001, at + 0.5);
+                o.connect(g); g.connect(master);
+                o.start(at); o.stop(at + 0.55);
+            }
+            [t0 + 0.6, t0 + 1.4, t0 + 2.2, t0 + 3.0].forEach(boom);
+
+            // Final impact (higher minor chord)
+            const impact = t0 + 3.6;
+            const impactEnd = impact + 1.2;
+            [440.00, 523.25, 659.25].forEach((f, idx) => { // A4, C5, E5
+                const o = ctx.createOscillator();
+                const g = ctx.createGain();
+                o.type = 'square';
+                o.frequency.setValueAtTime(f, impact);
+                g.gain.setValueAtTime(0.0001, impact);
+                g.gain.exponentialRampToValueAtTime(0.8, impact + 0.05);
+                g.gain.exponentialRampToValueAtTime(0.0001, impactEnd);
+                o.connect(g); g.connect(master);
+                o.start(impact); o.stop(impactEnd + 0.05);
+            });
+
+            // Subtle tremolo on master for movement
+            const lfo = ctx.createOscillator();
+            const lfoGain = ctx.createGain();
+            lfo.type = 'sine';
+            lfo.frequency.setValueAtTime(5, t0);
+            lfoGain.gain.setValueAtTime(0.15, t0);
+            lfo.connect(lfoGain); lfoGain.connect(master.gain);
+            lfo.start(t0); lfo.stop(impactEnd + 0.2);
+        }
+        
+        // --- Configurable Confetti Effect ---
+        function launchConfetti() {
+            // --- Easy-to-change variables ---
+            const CONFETTI_COUNT = 80;
+            const CONFETTI_SIZE = '3.5rem';
+            const CONFETTI_DURATION_MIN = 5000; // milliseconds
+            const CONFETTI_DURATION_MAX = 9000; // milliseconds
+            // ------------------------------------
+
+            const emojis = ["🎉", "🦊", "🎊", "🎈", "🦊", "⭐"];
+            for (let i = 0; i < CONFETTI_COUNT; i++) {
+                const particle = document.createElement("div");
+                particle.classList.add("confetti-particle");
+                particle.textContent = emojis[Math.floor(Math.random() * emojis.length)];
+                
+                const duration = Math.random() * (CONFETTI_DURATION_MAX - CONFETTI_DURATION_MIN) + CONFETTI_DURATION_MIN;
+
+                particle.style.setProperty('--x-start', `${Math.random() * 100}vw`);
+                particle.style.setProperty('--x-end', `${(Math.random() - 0.5) * 40}vw`);
+                particle.style.setProperty('--size', CONFETTI_SIZE);
+                particle.style.setProperty('--duration', `${duration}ms`);
+                particle.style.setProperty('--delay', `${Math.random() * 0.5}s`);
+
+                document.body.appendChild(particle);
+                setTimeout(() => particle.remove(), duration + 500);
+            }
+        }
+
+        // Bigger, flashier confetti for Hard tier unlock only
+        function launchUnlockConfettiSpecial() {
+            const CONFETTI_COUNT = 160;
+            const CONFETTI_SIZE = '4rem';
+            const CONFETTI_DURATION_MIN = 7000;
+            const CONFETTI_DURATION_MAX = 12000;
+            const emojis = ["🎺","🏆","🎉","🎊","✨","🦊","🔥","⭐","🎈"]; 
+            for (let i = 0; i < CONFETTI_COUNT; i++) {
+                const particle = document.createElement('div');
+                particle.classList.add('confetti-particle');
+                particle.textContent = emojis[Math.floor(Math.random() * emojis.length)];
+                const duration = Math.random() * (CONFETTI_DURATION_MAX - CONFETTI_DURATION_MIN) + CONFETTI_DURATION_MIN;
+                particle.style.setProperty('--x-start', `${Math.random() * 100}vw`);
+                particle.style.setProperty('--x-end', `${(Math.random() - 0.5) * 55}vw`);
+                particle.style.setProperty('--size', CONFETTI_SIZE);
+                particle.style.setProperty('--duration', `${duration}ms`);
+                particle.style.setProperty('--delay', `${Math.random() * 0.6}s`);
+                document.body.appendChild(particle);
+                setTimeout(() => particle.remove(), duration + 800);
+            }
+        }
+
+        // --- Core Application Logic ---
+        const generateUniqueId=()=>`_${Math.random().toString(36).substr(2,9)}`;
+        function shuffleTasks(e){for(let t=e.length-1;t>0;t--){const o=Math.floor(Math.random()*(t+1));[e[t],e[o]]=[e[o],e[t]]}}
+        function createVirtualItems(){tickerReel.innerHTML="",virtualItems=[],Array.from({length:VISIBLE_ITEMS}).forEach(()=>{const e=document.createElement("div");e.className="ticker-item",tickerReel.appendChild(e),virtualItems.push(e)})}
+        function updateAndPositionItems(e){if(0===tasks.length)return void virtualItems.forEach(e=>e.textContent="");const t=Math.round(e/ITEM_HEIGHT),o=Math.floor(VISIBLE_ITEMS/2),n=t*ITEM_HEIGHT-e;virtualItems.forEach((i,a)=>{const s=(t+a-o+1e3*tasks.length)%tasks.length,l=n+(a-o)*ITEM_HEIGHT+2*ITEM_HEIGHT;i.style.transform=`translateY(${l}px)`;const d=tasks[s]?.text||"";i.textContent!==d&&(i.textContent=d)})}
+        const easeOutCubic=e=>(--e)*e*e+1;
+    function spin(){if(isSpinning||tasks.length<1)return;isSpinning=!0,spinBtn.disabled=!0,startSpinSound();const e=Math.floor(Math.random()*tasks.length),t=tasks[e];if(!t)return isSpinning=!1,void(spinBtn.disabled=!1);lastWinner={id:t.id,text:t.text};const o=15+Math.floor(2*Math.random()),n=o*tasks.length+e,i=n*ITEM_HEIGHT,a=1e3*parseFloat(spinDurationSlider.value);let s=null;const l=d=>{s||(s=d);const r=Math.min((d-s)/a,1),c=easeOutCubic(r),m=c*i;updateAndPositionItems(m),r<1?requestAnimationFrame(l):(isSpinning=!1,updateAndPositionItems(i),showWinnerModal(lastWinner.text))};requestAnimationFrame(l)}
+
+        // --- Data & State Management ---
+        function initTier() {
+            try {
+                const stored = localStorage.getItem(TIER_STORAGE_KEY);
+                if (stored === TIERS.HARD) {
+                    currentTier = TIERS.HARD;
+                    defaultTaskList = hardDefaultTasks;
+                } else {
+                    currentTier = TIERS.MEDIUM;
+                    defaultTaskList = defaultTasks;
+                }
+            } catch (e) {
+                currentTier = TIERS.MEDIUM;
+                defaultTaskList = defaultTasks;
+            }
+        }
+
+        function loadData(){try{const e=localStorage.getItem(TASKS_STORAGE_KEY),t=localStorage.getItem(TASKS_STORAGE_KEY_OLD),o=localStorage.getItem(CURRENT_TASK_STORAGE_KEY);let n=null;n=e?JSON.parse(e):t?JSON.parse(t):defaultTaskList,n.length>0&&"string"==typeof n[0]?(tasks=n.map(e=>({id:generateUniqueId(),text:e})),saveTasksToLocalStorage(),localStorage.removeItem(TASKS_STORAGE_KEY_OLD)):tasks=n,o&&displayCurrentTask(JSON.parse(o))||updateCompletionStats()}catch(e){console.error("Error loading data:",e),tasks=defaultTaskList.map(e=>({id:generateUniqueId(),text:e}))}}
+        function saveTasksToLocalStorage(){try{localStorage.setItem(TASKS_STORAGE_KEY,JSON.stringify(tasks))}catch(e){console.error("Error saving tasks:",e)}}
+        function saveCurrentTask(e){try{e?localStorage.setItem(CURRENT_TASK_STORAGE_KEY,JSON.stringify(e)):localStorage.removeItem(CURRENT_TASK_STORAGE_KEY)}catch(e){console.error("Error saving current task:",e)}}
+        const createTaskFrequencyMap=e=>e.reduce((e,t)=>(e[t]=(e[t]||0)+1,e),{});
+        function getCompletedDefaultTasks(){const e=createTaskFrequencyMap(defaultTaskList),t=createTaskFrequencyMap(tasks.map(e=>e.text)),o=[];for(const n in e){const i=e[n]-(t[n]||0);if(i>0)for(let e=0;e<i;e++)o.push(n)}return o}
+        function updateCompletedListUI(){
+            const completed = getCompletedDefaultTasks();
+            completedTaskList.innerHTML = "";
+            if (completed.length === 0) {
+                completedTaskList.innerHTML = '<p class="text-center italic">No tasks completed from the default list yet.</p>';
+                return;
+            }
+            completed.sort((a,b)=>a.localeCompare(b)).forEach(text => {
+                const row = document.createElement('div');
+                row.className = 'flex items-center justify-between bg-gray-700/50 p-2 rounded-lg';
+                const span = document.createElement('span');
+                span.className = 'truncate pr-2';
+                span.textContent = text;
+                span.title = text;
+                const btn = document.createElement('button');
+                btn.className = 'text-xs bg-emerald-500 hover:bg-emerald-600 text-gray-900 font-bold px-3 py-1 rounded';
+                btn.textContent = 'Restore';
+                btn.title = 'Restore this task to active list';
+                btn.addEventListener('click', () => restoreCompletedTask(text));
+                row.append(span, btn);
+                completedTaskList.appendChild(row);
+            });
+        }
+
+        function restoreCompletedTask(text){
+            if (!text) return;
+            tasks.push({ id: generateUniqueId(), text });
+            updateTaskListUI();
+            // Optional: small feedback
+            try { createShuffleSound(); } catch {}
+        }
+        function updateCompletionStats(){const e=getCompletedDefaultTasks().length,t=defaultTaskList.length,o=t>0?(100*e/t).toFixed(1):0,n=e+1;completionStats.textContent=`Task #${n} | ${o}% Complete`}
+    const updateTaskListUI=()=>{const e=searchInput.value.toLowerCase(),t=tasks.filter(t=>t.text.toLowerCase().includes(e)),o=!!localStorage.getItem(CURRENT_TASK_STORAGE_KEY);taskList.innerHTML="",0===t.length?taskList.innerHTML=`<p class="text-gray-400 text-center">${e?"No tasks match your search.":"Add tasks to spin!"}</p>`:t.forEach(e=>{const t=document.createElement("div");t.className="task-item flex items-center justify-between bg-gray-700 p-2 rounded-lg",t.innerHTML=`<span class="flex-grow truncate pr-2">${e.text}</span><button title="Remove task" class="remove-btn text-red-400 hover:text-red-600 font-bold">✖</button>`,t.querySelector(".remove-btn").onclick=()=>removeTask(e.id),taskList.appendChild(t)}),spinBtn.disabled=tasks.length<1||o,shuffleBtn.disabled=o||tasks.length<2,sortBtn.disabled=o||tasks.length<2,updateAndPositionItems(0),saveTasksToLocalStorage(),updateCompletedListUI(),updateCompletionStats(),checkForHardUnlock()},handleAddTask=()=>{const e=taskInput.value.trim();e&&(tasks.push({id:generateUniqueId(),text:e}),taskInput.value="",updateTaskListUI())},removeTask=e=>{const t=tasks.findIndex(t=>t.id===e);t>-1&&(tasks.splice(t,1),updateTaskListUI())};
+        
+        
+        // --- UI Interaction Handlers ---
+        function showWinnerModal(e){winnerText.textContent=e||"Nothing!",winnerModal.classList.remove("opacity-0","pointer-events-none"),modalContent.classList.remove("scale-95")}
+        function hideWinnerModal(){winnerModal.classList.add("opacity-0","pointer-events-none"),modalContent.classList.add("scale-95")}
+        function handleModalOkay(){hideWinnerModal(),saveCurrentTask(lastWinner),displayCurrentTask(lastWinner)}
+        function displayCurrentTask(e){e&&(updateCompletionStats(),taskStatusHeader.textContent="Current Task",currentTaskText.textContent=e.text,currentTaskActions.classList.remove("hidden"),currentTaskContainer.classList.remove("hidden"),spinBtn.disabled=!0,shuffleBtn.disabled=!0,sortBtn.disabled=!0)}
+    function showPostCompletionMessage(){taskStatusHeader.textContent="Task Complete!",currentTaskText.textContent="Roll your next task",currentTaskActions.classList.add("hidden"),currentTaskContainer.classList.remove("hidden");const e=!1;spinBtn.disabled=tasks.length<1||e,shuffleBtn.disabled=e||tasks.length<2,sortBtn.disabled=e||tasks.length<2;checkForHardUnlock()}
+        function handleCompleteCurrentTask(){createSuccessChime(),launchConfetti();const e=localStorage.getItem(CURRENT_TASK_STORAGE_KEY);e&&removeTask(JSON.parse(e)?.id),saveCurrentTask(null),showPostCompletionMessage()}
+        function handleSkipCurrentTask(){saveCurrentTask(null),showPostCompletionMessage()}
+        function toggleManagePanel(){const e=manageTasksPanel.classList.contains("hidden");e?(manageTasksPanel.classList.remove("hidden"),appContainer.classList.remove("justify-center"),appContainer.classList.add("lg:justify-between"),spinnerContainer.classList.remove("lg:w-full"),spinnerContainer.classList.add("lg:w-1/2")):(manageTasksPanel.classList.add("hidden"),appContainer.classList.remove("lg:justify-between"),appContainer.classList.add("justify-center"),spinnerContainer.classList.remove("lg:w-1/2"),spinnerContainer.classList.add("lg:w-full"))}
+
+        // --- Tier Unlock UI & Logic ---
+        function ensureTierUnlockOverlay() {
+            // Disabled: do not create unlock overlay
+            return;
+        }
+
+    function showTierUnlock() { /* disabled */ }
+    function hideTierUnlock() { /* disabled */ }
+
+        function checkForHardUnlock() {
+            // Disabled: do not trigger Hard tier when Medium completes
+            try { hideTierUnlock(); } catch { /* noop */ }
+            return;
+        }
+
+        // --- Task Viewer Functions ---
+        function renderTaskViewerGrid() {
+            const defaultTaskMap = createTaskFrequencyMap(defaultTaskList);
+            const currentTaskMap = createTaskFrequencyMap(tasks.map(t => t.text));
+
+            let allTaskItems = defaultTaskList.map(taskText => {
+                const isCompleted = (currentTaskMap[taskText] || 0) < (defaultTaskMap[taskText] || 0);
+                if (isCompleted) {
+                    currentTaskMap[taskText] = (currentTaskMap[taskText] || 0) + 1;
+                }
+                return { text: taskText, completed: isCompleted };
+            });
+
+            // Filter
+            if (taskViewerFilter === 'completed') {
+                allTaskItems = allTaskItems.filter(task => task.completed);
+            } else if (taskViewerFilter === 'incomplete') {
+                allTaskItems = allTaskItems.filter(task => !task.completed);
+            }
+
+            // Sort
+            if (taskViewerSort === 'az') {
+                allTaskItems.sort((a, b) => a.text.localeCompare(b.text));
+            } else if (taskViewerSort === 'random') {
+                shuffleTasks(allTaskItems);
+            }
+
+            const totalItems = allTaskItems.length;
+            taskGrid.innerHTML = '';
+            if (totalItems === 0) {
+                 taskGrid.innerHTML = `<p class="col-span-full text-center text-gray-400 text-2xl">No tasks match the current filter.</p>`;
+                 taskGrid.style.gridTemplateColumns = '1fr';
+                 taskGrid.style.gridTemplateRows = '1fr';
+                 return;
+            };
+
+            const containerWidth = taskGrid.clientWidth;
+            const containerHeight = taskGrid.clientHeight;
+            const aspectRatio = containerWidth / containerHeight;
+            const idealCols = Math.sqrt(totalItems * aspectRatio);
+            const cols = Math.ceil(idealCols);
+            const rows = Math.ceil(totalItems / cols);
+
+            taskGrid.style.gridTemplateColumns = `repeat(${cols}, 1fr)`;
+            taskGrid.style.gridTemplateRows = `repeat(${rows}, 1fr)`;
+            
+            const itemsToRender = allTaskItems.map(task => {
+                const div = document.createElement('div');
+                div.className = `task-grid-item ${task.completed ? 'completed' : ''}`;
+                div.textContent = task.text;
+                return div;
+            });
+            taskGrid.append(...itemsToRender);
+        }
+
+        function updateViewerControlsUI() {
+            document.querySelectorAll('#filterControls .viewer-btn').forEach(btn => {
+                btn.classList.toggle('active', btn.dataset.filter === taskViewerFilter);
+            });
+            document.querySelectorAll('#sortControls .viewer-btn').forEach(btn => {
+                btn.classList.toggle('active', btn.dataset.sort === taskViewerSort);
+            });
+        }
+        
+        function openTaskViewer() {
+            updateViewerControlsUI();
+            renderTaskViewerGrid();
+            taskViewerModal.classList.remove("opacity-0", "pointer-events-none");
+        }
+        function closeTaskViewer(){taskViewerModal.classList.add("opacity-0","pointer-events-none")}
+
+        // --- Event Listeners ---
+        spinBtn.addEventListener("click",spin);
+        addTaskBtn.addEventListener("click",handleAddTask);
+        taskInput.addEventListener("keypress",e=>{"Enter"===e.key&&handleAddTask()});
+        shuffleBtn.addEventListener("click",()=>{tasks.length>1&&(shuffleTasks(tasks),updateTaskListUI(),createShuffleSound())});
+        sortBtn.addEventListener("click",()=>{tasks.length>1&&(tasks.sort((e,t)=>e.text.localeCompare(t.text)),updateTaskListUI(),createShuffleSound())});
+        spinDurationSlider.addEventListener("input",()=>{spinDurationValue.textContent=spinDurationSlider.value});
+        modalOkayBtn.addEventListener("click",handleModalOkay);
+        currentTaskCompleteBtn.addEventListener("click",handleCompleteCurrentTask);
+        currentTaskSkipBtn.addEventListener("click",handleSkipCurrentTask);
+        toggleManageBtn.addEventListener("click",toggleManagePanel);
+        searchInput.addEventListener("input",updateTaskListUI);
+        taskViewerBtn.addEventListener("click",openTaskViewer);
+        closeViewerBtn.addEventListener("click",closeTaskViewer);
+        taskViewerModal.addEventListener("click",e=>{e.target===taskViewerModal&&closeTaskViewer()});
+        window.addEventListener("resize",()=>{!taskViewerModal.classList.contains("opacity-0")&&renderTaskViewerGrid()});
+        
+        filterControls.addEventListener('click', (e) => {
+            if (e.target.matches('.viewer-btn')) {
+                taskViewerFilter = e.target.dataset.filter;
+                updateViewerControlsUI();
+                renderTaskViewerGrid();
+            }
+        });
+
+        sortControls.addEventListener('click', (e) => {
+            if (e.target.matches('.viewer-btn')) {
+                taskViewerSort = e.target.dataset.sort;
+                updateViewerControlsUI();
+                renderTaskViewerGrid();
+            }
+        });
+
+        // --- Initialization ---
+        window.onload=()=>{
+            initTier();
+            loadData();
+            createVirtualItems();
+            updateTaskListUI();
+            updateViewerControlsUI(); // Set initial active buttons
+            // Unlock overlay/check disabled
+        };
+    </script>
+</body>
+</html>
