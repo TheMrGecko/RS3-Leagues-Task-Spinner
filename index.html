@@ -5,7 +5,7 @@
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>DoubleShines Task Tracker</title>
-    <script src="https://cdn.tailwindcss.com"></script>
+    <link rel="stylesheet" href="./assets/tailwind.css">
     <link rel="preconnect" href="https://fonts.googleapis.com">
     <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
     <link href="https://fonts.googleapis.com/css2?family=Orbitron:wght@400;700&family=Poppins:wght@300;400;600&display=swap" rel="stylesheet">
@@ -220,7 +220,7 @@
 
     <nav class="fixed top-0 left-0 w-full z-50">
         <div class="flex items-center justify-between p-2">
-            <img src="DSSIT.PNG" alt="DoubleShines Logo">
+            <img src="DSSIT.png" alt="DoubleShines Logo">
              <div class="flex space-x-2">
                  <button id="taskViewerBtn" class="bg-gray-700 text-white font-bold py-2 px-4 rounded-lg hover:bg-gray-600 transition-colors">Task Viewer</button>
                  <button id="toggleManageBtn" class="bg-gray-700 text-white font-bold py-2 px-4 rounded-lg hover:bg-gray-600 transition-colors">Manage Tasks</button>
@@ -879,7 +879,51 @@
         function createTickSound(e,t){const o=e.createOscillator(),n=e.createGain();o.connect(n),n.connect(e.destination),o.type="sine",o.frequency.setValueAtTime(440,t),n.gain.setValueAtTime(.01,t),n.gain.linearRampToValueAtTime(.3,t+.005),n.gain.linearRampToValueAtTime(1e-4,t+.05),o.start(t),o.stop(t+.05)}
         function createFlourishSound(e,t){const o=e.createOscillator(),n=e.createGain();o.connect(n),n.connect(e.destination),o.type="sine",o.frequency.setValueAtTime(880,t),o.frequency.linearRampToValueAtTime(1760,t+.2),n.gain.setValueAtTime(.01,t),n.gain.linearRampToValueAtTime(.5,t+.01),n.gain.linearRampToValueAtTime(1e-4,t+.8),o.start(t),o.stop(t+.8)}
         function createShuffleSound(){const e=getAudioContext(),t=.3,o=e.currentTime,n=e.createOscillator(),i=e.createGain();n.connect(i),i.connect(e.destination),n.type="sine",n.frequency.setValueAtTime(1e3,o),n.frequency.linearRampToValueAtTime(100,o+t),i.gain.setValueAtTime(.5,o),i.gain.linearRampToValueAtTime(1e-4,o+t),n.start(o),n.stop(o+t)}
-        function startSpinSound(){if(isSoundPlaying)return;isSoundPlaying=!0;const e=getAudioContext();soundTimeoutId&&clearTimeout(soundTimeoutId);const t=parseFloat(spinDurationSlider.value),o=Math.min(10+.2*tasks.length,40),n=1,i=e.currentTime+.1;let a=i,s=0;const l=setInterval(()=>{if(s>=t)return clearInterval(l),createFlourishSound(e,a),void(soundTimeoutId=setTimeout(()=>{isSoundPlaying=!1,soundTimeoutId=null,audioContext&&"running"===audioContext.state&&(audioContext.close(),audioContext=null)},1e3*(a-e.currentTime+1)));createTickSound(e,a);const d=s/t;let r=o-(o-n)*d;r=Math.max(r,n);const c=1/Math.max(r,.1);a+=c,s+=c,a>i+t+.5&&(clearInterval(l),createFlourishSound(e,i+t),soundTimeoutId=setTimeout(()=>{isSoundPlaying=!1,soundTimeoutId=null,audioContext&&"running"===audioContext.state&&(audioContext.close(),audioContext=null)},1e3*(i+t-e.currentTime+1)))},10)}
+        function startSpinSound(){
+            if (isSoundPlaying) return;
+            isSoundPlaying = !0;
+            const e = getAudioContext();
+            soundTimeoutId && clearTimeout(soundTimeoutId);
+            const t = parseFloat(spinDurationSlider.value),
+                  o = Math.min(10 + .2 * tasks.length, 40),
+                  n = 1,
+                  i = e.currentTime + .1;
+            let a = i, s = 0;
+            const l = setInterval(() => {
+                if (s >= t) {
+                    clearInterval(l);
+                    createFlourishSound(e, a);
+                    soundTimeoutId = setTimeout(() => {
+                        isSoundPlaying = !1;
+                        soundTimeoutId = null;
+                        if (audioContext && audioContext.state === "running") {
+                            try { audioContext.close(); } catch (err) {}
+                            audioContext = null;
+                        }
+                    }, 1e3 * (a - e.currentTime + 1));
+                    return;
+                }
+                createTickSound(e, a);
+                const d = s / t;
+                let r = o - (o - n) * d;
+                r = Math.max(r, n);
+                const c = 1 / Math.max(r, .1);
+                a += c;
+                s += c;
+                if (a > i + t + .5) {
+                    clearInterval(l);
+                    createFlourishSound(e, i + t);
+                    soundTimeoutId = setTimeout(() => {
+                        isSoundPlaying = !1;
+                        soundTimeoutId = null;
+                        if (audioContext && audioContext.state === "running") {
+                            try { audioContext.close(); } catch (err) {}
+                            audioContext = null;
+                        }
+                    }, 1e3 * (i + t - e.currentTime + 1));
+                }
+            }, 10);
+        }
         function createSuccessChime(){const e=getAudioContext(),t=e.currentTime,o=e.createGain();o.gain.setValueAtTime(.3,t),o.gain.exponentialRampToValueAtTime(1e-4,t+1.2);const n=e.createOscillator();n.type="sine",n.frequency.setValueAtTime(523.25,t),n.frequency.setValueAtTime(659.25,t+.1);const i=e.createOscillator();i.type="sine",i.frequency.setValueAtTime(783.99,t+.2),n.connect(o),i.connect(o),o.connect(e.destination),n.start(t),n.stop(t+.2),i.start(t+.2),i.stop(t+1)}
         // Special, ominous multi-second fanfare for Hard tier unlock
         function playUnlockFanfare(){
@@ -1044,7 +1088,7 @@
         function initTier() {
             try {
                 const stored = localStorage.getItem(TIER_STORAGE_KEY);
-                if (stored === TIERS.HARD) {
+                if (stored === TIERS.HARD && typeof hardDefaultTasks !== 'undefined') {
                     currentTier = TIERS.HARD;
                     defaultTaskList = hardDefaultTasks;
                 } else {
@@ -1196,7 +1240,7 @@
         // --- Event Listeners ---
         spinBtn.addEventListener("click",spin);
         addTaskBtn.addEventListener("click",handleAddTask);
-        taskInput.addEventListener("keypress",e=>{"Enter"===e.key&&handleAddTask()});
+    taskInput.addEventListener("keydown", e => { if (e.key === "Enter") handleAddTask(); });
         shuffleBtn.addEventListener("click",()=>{tasks.length>1&&(shuffleTasks(tasks),updateTaskListUI(),createShuffleSound())});
         sortBtn.addEventListener("click",()=>{tasks.length>1&&(tasks.sort((e,t)=>e.text.localeCompare(t.text)),updateTaskListUI(),createShuffleSound())});
         spinDurationSlider.addEventListener("input",()=>{spinDurationValue.textContent=spinDurationSlider.value});

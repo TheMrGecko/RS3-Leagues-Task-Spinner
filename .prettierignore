@@ -1,0 +1,8 @@
+# Ignore lockfiles and images
+*.png
+*.jpg
+*.jpeg
+*.gif
+
+# No node_modules here, but include for future safety
+node_modules/
