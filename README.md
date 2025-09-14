@@ -76,17 +76,20 @@ npm run dev:css
 
 - Avoid changing the `ITEM_HEIGHT` constant or the matching CSS `--item-height` unless you update both together.
 - The spinner uses a small set of "virtual" rows for performance; updating the data triggers a full repaint.
-- The app defensively ignores a stale "hard tier" flag in localStorage if the corresponding task list is not defined.
 
 ## Accessibility
 
 - Buttons have descriptive text and clear focus/hover states.
 - Modal windows can be closed by clicking the dimmed overlay (viewer) or the provided button.
 
-## License
+## Usage & attribution
 
-Personal project, no license specified. You may fork for personal use.
+Friendly note about reusing this project:
 
----
+- Personal use: absolutely okay. Clone it, tweak it, and host it for yourself or your friends.
+- Credit: please keep the "Made by Gecko" footer or add a small credit/link back. It helps a lot.
+- Commercial use: not permitted without written permission. If you have a cool idea, reach out first.
+
+Thanks for being respectful and sharing the love!
 
 Made by Gecko
