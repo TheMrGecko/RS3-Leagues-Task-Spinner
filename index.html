@@ -417,12 +417,27 @@
       id="resetConfirmModal"
       class="fixed inset-0 bg-black bg-opacity-70 flex items-center justify-center p-4 z-[60] opacity-0 pointer-events-none"
     >
-      <div class="modal-content bg-gray-800 rounded-2xl p-8 text-center border-2 border-red-500 transform scale-95">
+      <div
+        class="modal-content bg-gray-800 rounded-2xl p-8 text-center border-2 border-red-500 transform scale-95"
+      >
         <h2 class="text-2xl font-bold text-white mb-3">Reset all data?</h2>
-        <p class="text-gray-300 mb-6">This will clear your current pool, current task, and completed list, and restore the starting defaults. This action cannot be undone.</p>
+        <p class="text-gray-300 mb-6">
+          This will clear your current pool, current task, and completed list, and restore the
+          starting defaults. This action cannot be undone.
+        </p>
         <div class="flex justify-center gap-4">
-          <button id="resetConfirmNoBtn" class="bg-gray-600 text-white font-bold py-2 px-6 rounded-full hover:bg-gray-500 transition-colors">Cancel</button>
-          <button id="resetConfirmYesBtn" class="bg-red-600 text-white font-bold py-2 px-6 rounded-full hover:bg-red-700 transition-colors">Yes, Reset</button>
+          <button
+            id="resetConfirmNoBtn"
+            class="bg-gray-600 text-white font-bold py-2 px-6 rounded-full hover:bg-gray-500 transition-colors"
+          >
+            Cancel
+          </button>
+          <button
+            id="resetConfirmYesBtn"
+            class="bg-red-600 text-white font-bold py-2 px-6 rounded-full hover:bg-red-700 transition-colors"
+          >
+            Yes, Reset
+          </button>
         </div>
       </div>
     </div>
@@ -508,19 +523,77 @@
       // --- Default Task Lists ---
       // Paste your fixed lists into these arrays as plain strings.
       // Example: "Reach level 10 in any skill"
-      const defaultEasyTasks = ['easy1', 'easy2', 'easy3','easy4','easy5','easy6','easy7','easy8','easy9','easy10',
+      const defaultEasyTasks = [
+        'easy1',
+        'easy2',
+        'easy3',
+        'easy4',
+        'easy5',
+        'easy6',
+        'easy7',
+        'easy8',
+        'easy9',
+        'easy10',
         // EASY tasks go here
       ];
-      const defaultMediumTasks = ['medium1', 'medium2', 'medium3','medium4','medium5','medium6','medium7','medium8','medium9','medium10','medium11','medium12','medium13','medium14',
+      const defaultMediumTasks = [
+        'medium1',
+        'medium2',
+        'medium3',
+        'medium4',
+        'medium5',
+        'medium6',
+        'medium7',
+        'medium8',
+        'medium9',
+        'medium10',
+        'medium11',
+        'medium12',
+        'medium13',
+        'medium14',
         // MEDIUM tasks go here
       ];
-      const defaultHardTasks = ['hard1', 'hard2', 'hard3','hard4','hard5','hard6','hard7','hard8','hard9','hard10','hard11','hard12','hard13','hard14','hard15'
+      const defaultHardTasks = [
+        'hard1',
+        'hard2',
+        'hard3',
+        'hard4',
+        'hard5',
+        'hard6',
+        'hard7',
+        'hard8',
+        'hard9',
+        'hard10',
+        'hard11',
+        'hard12',
+        'hard13',
+        'hard14',
+        'hard15',
         // HARD tasks go here
       ];
-      const defaultMasterTasks = ['master1', 'master2', 'master3','master4','master5','master6','master7','master8','master9',
+      const defaultMasterTasks = [
+        'master1',
+        'master2',
+        'master3',
+        'master4',
+        'master5',
+        'master6',
+        'master7',
+        'master8',
+        'master9',
         // MASTER tasks go here
       ];
-      const defaultGrandMasterTasks = ['grandmaster1', 'grandmaster2', 'grandmaster3','grandmaster4','grandmaster5','grandmaster6','grandmaster7','grandmaster8','grandmaster9','grandmaster10'
+      const defaultGrandMasterTasks = [
+        'grandmaster1',
+        'grandmaster2',
+        'grandmaster3',
+        'grandmaster4',
+        'grandmaster5',
+        'grandmaster6',
+        'grandmaster7',
+        'grandmaster8',
+        'grandmaster9',
+        'grandmaster10',
         // GRAND-MASTER tasks go here
       ];
 
@@ -567,15 +640,15 @@
         soundTimeoutId = null,
         taskViewerFilter = 'all',
         taskViewerSort = 'az';
-  // Active default list for legacy fallbacks only (viewer uses all tiers; completion stats now use all tiers)
-  let defaultTaskList = defaultEasyTasks;
-  // Fixed target: start size equals easy list length. We maintain pool size at this target.
-  let TARGET_POOL_SIZE = defaultEasyTasks.length;
+      // Active default list for legacy fallbacks only (viewer uses all tiers; completion stats now use all tiers)
+      let defaultTaskList = defaultEasyTasks;
+      // Fixed target: start size equals easy list length. We maintain pool size at this target.
+      let TARGET_POOL_SIZE = defaultEasyTasks.length;
 
       // Constants
       const ITEM_HEIGHT = 60,
         VISIBLE_ITEMS = 9,
-  // Legacy keys (v1/v2) kept for migration
+        // Legacy keys (v1/v2) kept for migration
         TASKS_STORAGE_KEY_OLD = 'taskTickerTasks',
         TASKS_STORAGE_KEY = 'taskTickerTasks_v2',
         CURRENT_TASK_STORAGE_KEY_OLD = 'taskTickerCurrentTask_v2',
@@ -849,7 +922,7 @@
 
       // --- Data & State Management ---
 
-  // No settings: behavior is fully automatic.
+      // No settings: behavior is fully automatic.
 
       function loadData() {
         try {
@@ -883,12 +956,20 @@
               // Recompute target from initial default easy size if pool seems empty
               TARGET_POOL_SIZE = defaultEasyTasks.length || tasks.length;
             } else {
-              tasks = defaultEasyTasks.map((text) => ({ id: generateUniqueId(), text, tier: 'easy' }));
+              tasks = defaultEasyTasks.map((text) => ({
+                id: generateUniqueId(),
+                text,
+                tier: 'easy',
+              }));
               TARGET_POOL_SIZE = defaultEasyTasks.length;
             }
           } else {
             // Fresh start: build pool from EASY defaults
-            tasks = defaultEasyTasks.map((text) => ({ id: generateUniqueId(), text, tier: 'easy' }));
+            tasks = defaultEasyTasks.map((text) => ({
+              id: generateUniqueId(),
+              text,
+              tier: 'easy',
+            }));
             TARGET_POOL_SIZE = defaultEasyTasks.length;
             // Try to append legacy user-added tasks as custom
             let legacy = null;
@@ -896,9 +977,13 @@
             else if (legacyRawV1) legacy = JSON.parse(legacyRawV1);
             if (Array.isArray(legacy) && legacy.length) {
               if (typeof legacy[0] === 'string') {
-                legacy.forEach((text) => tasks.push({ id: generateUniqueId(), text, tier: 'custom' }));
+                legacy.forEach((text) =>
+                  tasks.push({ id: generateUniqueId(), text, tier: 'custom' })
+                );
               } else if (legacy[0] && legacy[0].text) {
-                legacy.forEach((o) => tasks.push({ id: generateUniqueId(), text: o.text, tier: 'custom' }));
+                legacy.forEach((o) =>
+                  tasks.push({ id: generateUniqueId(), text: o.text, tier: 'custom' })
+                );
               }
             }
           }
@@ -908,7 +993,11 @@
           (currentRaw && displayCurrentTask(JSON.parse(currentRaw))) || updateCompletionStats();
         } catch (e) {
           console.error('Error loading data:', e),
-            (tasks = defaultTaskList.map((e) => ({ id: generateUniqueId(), text: e, tier: 'easy' })));
+            (tasks = defaultTaskList.map((e) => ({
+              id: generateUniqueId(),
+              text: e,
+              tier: 'easy',
+            })));
         }
       }
       function saveTasksToLocalStorage() {
@@ -966,14 +1055,26 @@
             left.className = 'flex items-center gap-2 min-w-0';
             const badge = document.createElement('span');
             badge.className = 'text-xs px-2 py-0.5 rounded bg-gray-600 shrink-0';
-            badge.textContent = tier === 'grandmaster' ? 'GM' : tier === 'master' ? 'Ma' : tier === 'hard' ? 'H' : tier === 'medium' ? 'M' : tier === 'easy' ? 'E' : 'C';
+            badge.textContent =
+              tier === 'grandmaster'
+                ? 'GM'
+                : tier === 'master'
+                ? 'Ma'
+                : tier === 'hard'
+                ? 'H'
+                : tier === 'medium'
+                ? 'M'
+                : tier === 'easy'
+                ? 'E'
+                : 'C';
             const span = document.createElement('span');
             span.className = 'truncate pr-2';
             span.textContent = text;
             span.title = text;
             left.append(badge, span);
             const btn = document.createElement('button');
-            btn.className = 'text-xs bg-emerald-500 hover:bg-emerald-600 text-gray-900 font-bold px-3 py-1 rounded';
+            btn.className =
+              'text-xs bg-emerald-500 hover:bg-emerald-600 text-gray-900 font-bold px-3 py-1 rounded';
             btn.textContent = 'Restore';
             btn.title = 'Restore this task to active list';
             btn.addEventListener('click', () => restoreCompletedTask(text, tier));
@@ -1012,16 +1113,17 @@
           hardSetConst.has(txt) ||
           masterSetConst.has(txt) ||
           grandMasterSetConst.has(txt);
-  const filteredCompleted = completedLog.filter(isDefault);
-  const completedUniqueAll = new Set(filteredCompleted).size;
+        const filteredCompleted = completedLog.filter(isDefault);
+        const completedUniqueAll = new Set(filteredCompleted).size;
         const totalDefaults =
           (defaultEasyTasks?.length || 0) +
           (defaultMediumTasks?.length || 0) +
           (defaultHardTasks?.length || 0) +
           (defaultMasterTasks?.length || 0) +
           (defaultGrandMasterTasks?.length || 0);
-        const percent = totalDefaults > 0 ? ((completedUniqueAll * 100) / totalDefaults).toFixed(1) : 0;
-  const nextIndex = filteredCompleted.length + 1;
+        const percent =
+          totalDefaults > 0 ? ((completedUniqueAll * 100) / totalDefaults).toFixed(1) : 0;
+        const nextIndex = filteredCompleted.length + 1;
         completionStats.textContent = `Task #${nextIndex} | ${percent}% Complete`;
       }
       function countPoolByTier() {
@@ -1048,11 +1150,15 @@
         const easyCount = easy + custom;
         const pct = (n) => (total ? Math.round((n / total) * 100) : 0);
         infoEl.innerHTML = `Pool: <span class="font-semibold">${total}</span>
-          &nbsp; · &nbsp; <span class="text-emerald-300">Easy ${easyCount} (${pct(easyCount)}%)</span>
+          &nbsp; · &nbsp; <span class="text-emerald-300">Easy ${easyCount} (${pct(
+          easyCount
+        )}%)</span>
           &nbsp; · &nbsp; <span class="text-orange-300">Medium ${medium} (${pct(medium)}%)</span>
           &nbsp; · &nbsp; <span class="text-yellow-300">Hard ${hard} (${pct(hard)}%)</span>
           &nbsp; · &nbsp; <span class="text-purple-300">Master ${master} (${pct(master)}%)</span>
-          &nbsp; · &nbsp; <span class="text-pink-300">Grand-Master ${grandmaster} (${pct(grandmaster)}%)</span>`;
+          &nbsp; · &nbsp; <span class="text-pink-300">Grand-Master ${grandmaster} (${pct(
+          grandmaster
+        )}%)</span>`;
       }
       const updateTaskListUI = () => {
           const e = searchInput.value.toLowerCase(),
@@ -1067,7 +1173,9 @@
                   const t = document.createElement('div');
                   (t.className =
                     'task-item flex items-center justify-between bg-gray-700 p-2 rounded-lg'),
-                    (t.innerHTML = `<span class="flex-grow truncate pr-2">${e.text}</span><span class="text-xs px-2 py-0.5 rounded bg-gray-600 mr-2">${
+                    (t.innerHTML = `<span class="flex-grow truncate pr-2">${
+                      e.text
+                    }</span><span class="text-xs px-2 py-0.5 rounded bg-gray-600 mr-2">${
                       e.tier === 'grandmaster'
                         ? 'GM'
                         : e.tier === 'master'
@@ -1423,7 +1531,7 @@
         !taskViewerModal.classList.contains('opacity-0') && renderTaskViewerGrid();
       });
 
-  // No settings to wire up anymore.
+      // No settings to wire up anymore.
 
       filterControls.addEventListener('click', (e) => {
         if (e.target.matches('.viewer-btn')) {
