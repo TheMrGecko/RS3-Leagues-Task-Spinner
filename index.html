@@ -293,7 +293,7 @@
 
     <div
       id="app-container"
-      class="w-full max-w-6xl mx-auto flex flex-col lg:flex-row items-start justify-center gap-8 lg:gap-16 transition-all-layout"
+  class="w-full max-w-[80vw] mx-auto flex flex-col lg:flex-row items-start justify-center gap-8 lg:gap-16 transition-all-layout"
     >
       <div
         id="spinnerContainer"
@@ -489,7 +489,7 @@
         `Travel to the Mammoth Iceberg`,
         `Teleport using Law runes`,
         `Take a medium companion through a medium route of Temple Trekking`,
-        `Steal some Wine of Zamorak from the Captured Temple, south of Goblin Village`,
+        `Steal some Wine of Zamorak from the Captured Temple`,
         `Steal from the lamp stall in Menaphos`,
         `Steal from the fish stall in Rellekka`,
         `Steal a lantern from a cave goblin`,
@@ -497,9 +497,9 @@
         `Siphon Rune dust from a RuneSphere in the RuneSpan`,
         `Siphon from a nature esshound in the Runespan`,
         `Set up a dwarf cannon`,
-        `Search the Grand Gold Chest in room 6 of Pyramid Plunder in Sophanem`,
-        `Search the Grand Gold Chest in room 5 of Pyramid Plunder in Sophanem`,
-        `Search the Grand Gold Chest in room 4 of Pyramid Plunder in Sophanem`,
+        `Search the Chest in room 6 of Pyramid Plunder`,
+        `Search the Chest in room 5 of Pyramid Plunder`,
+        `Search the Chest in room 4 of Pyramid Plunder`,
         `Scatter 100 ashes of any kind`,
         `Sacrifice Dragon bones on the Chaos Altar`,
         `Ride a mine cart into Keldagrim`,
@@ -517,7 +517,7 @@
         `Reach at least level 20 in all non-elite skills`,
         `Reach at least level 10 in all non-elite skills`,
         `Reach at least level 5 in all non-elite skills`,
-        `Purchase the herb bag and the herb bag upgrade from the Herby Werby reward shop`,
+        `Purchase a herb bag and the herb bag upgrade`,
         `Plant seeds in any farming patch 100 times`,
         `Pickpocket anyone 200 times`,
         `Pickpocket a Varrock guard`,
@@ -569,11 +569,11 @@
         `Harvest a herb from the troll stronghold herb patch`,
         `Harvest 100 sparkling energy from Sparkling Wisps`,
         `Harvest 5 Grimy Ranarr`,
-        //`Given by Reldo in Varrock Palace's library for completing all Medium Tasks in Varrock`,
-        //`Given by Rat Burgiss south of Varrock for completing all Easy Tasks in Varrock`,
-        //`Given by Ned in Draynor Village for completing all Medium Tasks in Lumbridge`,
-        //`Given by Explorer Jack in Lumbridge for completing all Beginner Tasks in Lumbridge`,
-        //`Given by Bob, the axe seller in Lumbridge, for completing all Easy Tasks in Lumbridge`,
+        `Complete the Medium Varrock achievements`,
+        `Complete the Easy Varrock achievements`,
+        `Complete the Medium lumbridge achievements`,
+        `Complete the Easy Lumbridge achievements`,
+        `Complete the Beginner Lumbridge achievements`,
         `Give Snoop some clean Dwarf weed`,
         `Get Stiles to exchange some of your fish for bank notes`,
         `Gather and convert 50 bright memories`,
@@ -877,7 +877,7 @@
         `Fletch some Arrow Shafts`,
         `Fletch an Oak Shortbow (unstrung)`,
         `Fletch 50 Bronze bolts`,
-        `Fill up Luthas' crate near the Musa Point plantation with bananas and receive 30 coins for your work`,
+        `Fill up Luthas' crate with bananas and receive 30 coins for your work`,
         `Fill a Charmed Sack with corruption at the Nexus in Lumbridge Swamp`,
         `Equip a Marksman hat`,
         `Equip a full set of Spider silk robes`,
@@ -1419,11 +1419,17 @@
           ? (manageTasksPanel.classList.remove('hidden'),
             appContainer.classList.remove('justify-center'),
             appContainer.classList.add('lg:justify-between'),
+            // when panel is visible, constrain overall width to original max
+            appContainer.classList.remove('max-w-[80vw]'),
+            appContainer.classList.add('max-w-6xl'),
             spinnerContainer.classList.remove('lg:w-full'),
             spinnerContainer.classList.add('lg:w-1/2'))
           : (manageTasksPanel.classList.add('hidden'),
             appContainer.classList.remove('lg:justify-between'),
             appContainer.classList.add('justify-center'),
+            // when panel is hidden, allow spinner to grow to 80vw
+            appContainer.classList.remove('max-w-6xl'),
+            appContainer.classList.add('max-w-[80vw]'),
             spinnerContainer.classList.remove('lg:w-1/2'),
             spinnerContainer.classList.add('lg:w-full'));
       }
