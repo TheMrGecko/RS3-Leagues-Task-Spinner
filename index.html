@@ -562,7 +562,7 @@
     <script>
       // --- Default Task Lists ---
       const defaultEasyTasks = [
-        'Complete the quest: Witch\'s House',
+        "Complete the quest: Witch's House",
         'Visit Dragontooth Island by boat.',
         'View the skillguide.',
         'Using either a Silver Sickle or the Ivandis Flail, grow some fungus in the swamp using Bloom.',
@@ -2033,7 +2033,7 @@
           const currentRawV3 = localStorage.getItem(CURRENT_TASK_STORAGE_KEY);
           const currentRawV2 = localStorage.getItem(CURRENT_TASK_STORAGE_KEY_OLD);
 
-      if (poolRaw) {
+          if (poolRaw) {
             const parsed = JSON.parse(poolRaw);
             // Expect objects with {id,text,tier}
             if (Array.isArray(parsed) && parsed.length && parsed[0] && parsed[0].text) {
@@ -2055,8 +2055,8 @@
               }));
               // Recompute target from initial default easy size if pool seems empty
               TARGET_POOL_SIZE = defaultEasyTasks.length || tasks.length;
-        // Non-destructive migration: ensure any newly added default easy tasks appear for existing users
-        mergeNewDefaultEasyIntoPool();
+              // Non-destructive migration: ensure any newly added default easy tasks appear for existing users
+              mergeNewDefaultEasyIntoPool();
             } else {
               tasks = defaultEasyTasks.map((text) => ({
                 id: generateUniqueId(),
