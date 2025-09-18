@@ -562,6 +562,7 @@
     <script>
       // --- Default Task Lists ---
       const defaultEasyTasks = [
+        'Complete the quest: Witch\'s House',
         'Visit Dragontooth Island by boat.',
         'View the skillguide.',
         'Using either a Silver Sickle or the Ivandis Flail, grow some fungus in the swamp using Bloom.',
@@ -2032,7 +2033,7 @@
           const currentRawV3 = localStorage.getItem(CURRENT_TASK_STORAGE_KEY);
           const currentRawV2 = localStorage.getItem(CURRENT_TASK_STORAGE_KEY_OLD);
 
-          if (poolRaw) {
+      if (poolRaw) {
             const parsed = JSON.parse(poolRaw);
             // Expect objects with {id,text,tier}
             if (Array.isArray(parsed) && parsed.length && parsed[0] && parsed[0].text) {
@@ -2054,6 +2055,8 @@
               }));
               // Recompute target from initial default easy size if pool seems empty
               TARGET_POOL_SIZE = defaultEasyTasks.length || tasks.length;
+        // Non-destructive migration: ensure any newly added default easy tasks appear for existing users
+        mergeNewDefaultEasyIntoPool();
             } else {
               tasks = defaultEasyTasks.map((text) => ({
                 id: generateUniqueId(),
@@ -2113,6 +2116,43 @@
             : localStorage.removeItem(CURRENT_TASK_STORAGE_KEY);
         } catch (e) {
           console.error('Error saving current task:', e);
+        }
+      }
+      // Merge newly added default easy tasks into existing users' pool without resetting progress
+      function mergeNewDefaultEasyIntoPool() {
+        try {
+          // Ensure we only add EASY defaults that are not already in the pool and not already completed
+          const poolTexts = new Set(tasks.map((t) => t.text));
+          const completedSet = new Set(completedLog);
+          let added = 0;
+          for (const text of defaultEasyTasks) {
+            if (!poolTexts.has(text) && !completedSet.has(text)) {
+              tasks.push({ id: generateUniqueId(), text, tier: 'easy' });
+              added++;
+            }
+          }
+          if (added > 0) {
+            // Keep target at current default easy size
+            TARGET_POOL_SIZE = defaultEasyTasks.length;
+            // If oversized, prune from higher tiers first to avoid removing Easy or Custom
+            const dropOrder = ['grandmaster', 'master', 'hard', 'medium'];
+            let madeProgress = true;
+            while (tasks.length > TARGET_POOL_SIZE && madeProgress) {
+              madeProgress = false;
+              for (const tier of dropOrder) {
+                const idx = tasks.findIndex((t) => t.tier === tier);
+                if (idx > -1) {
+                  tasks.splice(idx, 1);
+                  madeProgress = true;
+                  break;
+                }
+              }
+            }
+            // Persist the merged pool now; UI refresh will occur after load
+            saveTasksToLocalStorage();
+          }
+        } catch (err) {
+          console.error('mergeNewDefaultEasyIntoPool error:', err);
         }
       }
       const createTaskFrequencyMap = (e) => e.reduce((e, t) => ((e[t] = (e[t] || 0) + 1), e), {});
